@@ -1,0 +1,13 @@
+# NPM
+node_modules/
+package-lock.json
+
+# Build outputs
+build/
+dist/
+.expo/
+web-build/
+
+# OS
+.DS_Store
+Thumbs.db
