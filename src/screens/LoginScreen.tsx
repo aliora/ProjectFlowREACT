@@ -11,6 +11,7 @@ import {
     Platform,
     ScrollView,
     Animated,
+    Image,
     LayoutAnimation,
     UIManager
 } from 'react-native';
@@ -87,6 +88,10 @@ export const LoginScreen: React.FC<Props> = ({ startWithRegister = false, onSucc
 
     const [showPassword, setShowPassword] = useState(false);
     const toggleBackgroundColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+    const firstNameRef = useRef<TextInput>(null);
+    const lastNameRef = useRef<TextInput>(null);
+    const emailRef = useRef<TextInput>(null);
+    const passwordRef = useRef<TextInput>(null);
 
     useEffect(() => {
         if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -136,9 +141,13 @@ export const LoginScreen: React.FC<Props> = ({ startWithRegister = false, onSucc
     return (
         <View style={styles.container}>
             <FadeInView delay={100} style={styles.header}>
-                <MaterialCommunityIcons name="rocket" size={60} color={colors.primary} />
-                <Text style={[styles.title, { color: colors.text }]}>ProjectFlow</Text>
-                <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+                <Image
+                    source={require('../../assets/animations/rocket.png')}
+                    style={styles.rocketImage}
+                    resizeMode="contain"
+                />
+                <Text style={[styles.title, { color: colors.text, letterSpacing: 2 }]}>ProjectFlow</Text>
+                <Text style={[styles.subtitle, { color: colors.textSecondary, letterSpacing: 2.5 }]}>
                     Plan. Execute. Succeed.
                 </Text>
             </FadeInView>
@@ -156,25 +165,34 @@ export const LoginScreen: React.FC<Props> = ({ startWithRegister = false, onSucc
                 {authMode === 'register' && (
                     <SlideInDownView delay={80} fromY={-12} style={styles.row}>
                         <TextInput
+                            ref={firstNameRef}
                             style={[styles.input, styles.halfInput, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#fff', borderColor: colors.divider, color: colors.text }]}
                             placeholder="First Name"
                             placeholderTextColor={colors.textSecondary}
                             value={firstName}
                             onChangeText={setFirstName}
+                            returnKeyType="next"
+                            blurOnSubmit={false}
+                            onSubmitEditing={() => lastNameRef.current?.focus()}
                         />
                         <View style={{ width: 10 }} />
                         <TextInput
+                            ref={lastNameRef}
                             style={[styles.input, styles.halfInput, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#fff', borderColor: colors.divider, color: colors.text }]}
                             placeholder="Last Name"
                             placeholderTextColor={colors.textSecondary}
                             value={lastName}
                             onChangeText={setLastName}
+                            returnKeyType="next"
+                            blurOnSubmit={false}
+                            onSubmitEditing={() => emailRef.current?.focus()}
                         />
                     </SlideInDownView>
                 )}
 
                 <SlideInDownView delay={200}>
                     <TextInput
+                        ref={emailRef}
                         style={[styles.input, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#fff', borderColor: colors.divider, color: colors.text }]}
                         placeholder="Email"
                         placeholderTextColor={colors.textSecondary}
@@ -182,18 +200,24 @@ export const LoginScreen: React.FC<Props> = ({ startWithRegister = false, onSucc
                         autoCapitalize="none"
                         value={email}
                         onChangeText={setEmail}
+                        returnKeyType="next"
+                        blurOnSubmit={false}
+                        onSubmitEditing={() => passwordRef.current?.focus()}
                     />
                 </SlideInDownView>
 
                 <SlideInDownView delay={300}>
                     <View style={[styles.passwordContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#fff', borderColor: colors.divider }]}>
                         <TextInput
+                            ref={passwordRef}
                             style={[styles.passwordInput, { color: colors.text }]}
                             placeholder="Password"
                             placeholderTextColor={colors.textSecondary}
                             secureTextEntry={!showPassword}
                             value={password}
                             onChangeText={setPassword}
+                            returnKeyType="done"
+                            onSubmitEditing={handleAuth}
                         />
                         <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ padding: 10 }}>
                             <MaterialCommunityIcons name={showPassword ? "eye-off" : "eye"} size={20} color={colors.textSecondary} />
@@ -251,6 +275,11 @@ const styles = StyleSheet.create({
     header: {
         alignItems: 'center',
         marginBottom: 30,
+    },
+    rocketImage: {
+        width: 110,
+        height: 110,
+        transform: [{ rotate: '45deg' }, { scale: 2.5 }],
     },
     title: {
         fontSize: 28,
