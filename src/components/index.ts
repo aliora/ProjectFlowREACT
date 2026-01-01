@@ -41,3 +41,4 @@ export { BottomNavBar } from './BottomNavBar';
 
 export { default as WheelPicker } from './WheelPicker';
 export { RadioSwitch } from './RadioSwitch';
+export { ConfirmedAnimation } from './ConfirmedAnimation';

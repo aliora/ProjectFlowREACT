@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { Alert, Linking, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PagerView from 'react-native-pager-view';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -148,11 +148,23 @@ export const WelcomePage: React.FC<Props> = ({ onFinish }) => {
     };
 
     const requestNotifications = async () => {
-        const granted = await NotificationService.requestPermissions();
+        const { granted, canAskAgain } = await NotificationService.requestPermissions();
         if (granted) {
             setNotificationsEnabled(true);
             NotificationService.scheduleFreeTimeReminders();
+            return;
         }
+
+        Alert.alert(
+            'Notifications Disabled',
+            'Enable notifications to get project and team updates.',
+            canAskAgain
+                ? [{ text: 'OK' }]
+                : [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Open Settings', onPress: () => Linking.openSettings() },
+                ]
+        );
     };
 
     const completeOnboarding = async () => {

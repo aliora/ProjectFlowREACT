@@ -5,7 +5,7 @@
  * Includes Primary (Elevated) and Outlined button variants
  */
 
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -14,6 +14,7 @@ import {
   ActivityIndicator,
   ViewStyle,
   TextStyle,
+  Animated,
 } from 'react-native';
 import { useTheme } from '../theme';
 import { ButtonSize } from '../constants/Layout';
@@ -45,6 +46,8 @@ interface BaseButtonProps {
   style?: ViewStyle;
   /** Custom text style */
   textStyle?: TextStyle;
+  /** Scale factor when pressed */
+  pressScale?: number;
 }
 
 /**
@@ -60,53 +63,77 @@ export const ThemedPrimaryButton: React.FC<BaseButtonProps> = ({
   size = 'medium',
   style,
   textStyle,
+  pressScale = 1,
 }) => {
   const { colors } = useTheme();
   const sizeStyle = ButtonSize[size];
   const isDisabled = disabled || isLoading;
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const animatePress = (toValue: number) => {
+    if (isDisabled || pressScale === 1) {
+      return;
+    }
+
+    Animated.spring(scale, {
+      toValue,
+      friction: 6,
+      tension: 120,
+      useNativeDriver: true,
+    }).start();
+  };
 
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      disabled={isDisabled}
-      activeOpacity={0.8}
+    <Animated.View
       style={[
-        styles.button,
-        {
-          backgroundColor: isDisabled
-            ? colors.primary + '80' // Simple opacity simulation
-            : colors.primary,
-          paddingHorizontal: sizeStyle.paddingHorizontal,
-          paddingVertical: sizeStyle.paddingVertical,
-          minHeight: sizeStyle.minHeight,
-          borderRadius: sizeStyle.borderRadius,
-        },
         fullWidth && styles.fullWidth,
-        style,
+        { transform: [{ scale }] },
       ]}
     >
-      {isLoading ? (
-        <ActivityIndicator
-          size="small"
-          color="#FFFFFF"
-        />
-      ) : (
-        <View style={styles.content}>
-          {icon && <View style={styles.iconContainer}>{icon}</View>}
-          <Text
-            style={[
-              styles.label,
-              {
-                color: '#FFFFFF',
-              },
-              textStyle,
-            ]}
-          >
-            {label}
-          </Text>
-        </View>
-      )}
-    </TouchableOpacity>
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={() => animatePress(pressScale)}
+        onPressOut={() => animatePress(1)}
+        disabled={isDisabled}
+        activeOpacity={0.8}
+        style={[
+          styles.button,
+          {
+            backgroundColor: isDisabled
+              ? colors.primary + '80' // Simple opacity simulation
+              : colors.primary,
+            paddingHorizontal: sizeStyle.paddingHorizontal,
+            paddingVertical: sizeStyle.paddingVertical,
+            minHeight: sizeStyle.minHeight,
+            borderRadius: sizeStyle.borderRadius,
+          },
+          fullWidth && styles.fullWidth,
+          style,
+        ]}
+      >
+        {isLoading ? (
+          <ActivityIndicator
+            size="medium"
+            color="#FFFFFF"
+          />
+        ) : (
+          <View style={styles.content}>
+            {icon && <View style={styles.iconContainer}>{icon}</View>}
+            <Text
+              style={[
+                styles.label,
+                {
+                  color: '#FFFFFF',
+                },
+                textStyle,
+              ]}
+            >
+              {label}
+            </Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 

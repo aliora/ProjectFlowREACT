@@ -2,39 +2,35 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../theme';
 
-interface TimeValue {
-    hour: number;
-    minute: number;
-}
-
 interface RadioSwitchProps {
-    startTime: TimeValue;
-    endTime: TimeValue;
-    isSelectingStart: boolean;
-    onChange: (isStart: boolean) => void;
+    leftLabel: string;
+    rightLabel: string;
+    leftValue?: string;
+    rightValue?: string;
+    isLeftSelected: boolean;
+    onChange: (isLeft: boolean) => void;
 }
-
-const formatTime = (hour: number, minute: number): string =>
-    `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
 
 export const RadioSwitch: React.FC<RadioSwitchProps> = ({
-    startTime,
-    endTime,
-    isSelectingStart,
-    onChange
+    leftLabel,
+    rightLabel,
+    leftValue,
+    rightValue,
+    isLeftSelected,
+    onChange,
 }) => {
     const { colors, isDark } = useTheme();
     const [containerWidth, setContainerWidth] = useState(0);
 
-    const slideAnim = useRef(new Animated.Value(isSelectingStart ? 0 : 1)).current;
-    const startScale = useRef(new Animated.Value(isSelectingStart ? 1 : 0.95)).current;
-    const endScale = useRef(new Animated.Value(isSelectingStart ? 0.95 : 1)).current;
-    const startOpacity = useRef(new Animated.Value(isSelectingStart ? 1 : 0.6)).current;
-    const endOpacity = useRef(new Animated.Value(isSelectingStart ? 0.6 : 1)).current;
+    const slideAnim = useRef(new Animated.Value(isLeftSelected ? 0 : 1)).current;
+    const startScale = useRef(new Animated.Value(isLeftSelected ? 1 : 0.95)).current;
+    const endScale = useRef(new Animated.Value(isLeftSelected ? 0.95 : 1)).current;
+    const startOpacity = useRef(new Animated.Value(isLeftSelected ? 1 : 0.6)).current;
+    const endOpacity = useRef(new Animated.Value(isLeftSelected ? 0.6 : 1)).current;
 
     useEffect(() => {
         Animated.spring(slideAnim, {
-            toValue: isSelectingStart ? 0 : 1,
+            toValue: isLeftSelected ? 0 : 1,
             friction: 6,
             tension: 80,
             useNativeDriver: true,
@@ -42,29 +38,29 @@ export const RadioSwitch: React.FC<RadioSwitchProps> = ({
 
         Animated.parallel([
             Animated.spring(startScale, {
-                toValue: isSelectingStart ? 1 : 0.92,
+                toValue: isLeftSelected ? 1 : 0.92,
                 friction: 8,
                 tension: 100,
                 useNativeDriver: true,
             }),
             Animated.spring(endScale, {
-                toValue: isSelectingStart ? 0.92 : 1,
+                toValue: isLeftSelected ? 0.92 : 1,
                 friction: 8,
                 tension: 100,
                 useNativeDriver: true,
             }),
             Animated.timing(startOpacity, {
-                toValue: isSelectingStart ? 1 : 0.5,
+                toValue: isLeftSelected ? 1 : 0.5,
                 duration: 200,
                 useNativeDriver: true,
             }),
             Animated.timing(endOpacity, {
-                toValue: isSelectingStart ? 0.5 : 1,
+                toValue: isLeftSelected ? 0.5 : 1,
                 duration: 200,
                 useNativeDriver: true,
             }),
         ]).start();
-    }, [endOpacity, endScale, isSelectingStart, slideAnim, startOpacity, startScale]);
+    }, [endOpacity, endScale, isLeftSelected, slideAnim, startOpacity, startScale]);
 
     const sliderColor = isDark ? colors.primary : colors.primary;
     const sliderShadowColor = isDark ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.15)';
@@ -76,6 +72,8 @@ export const RadioSwitch: React.FC<RadioSwitchProps> = ({
     });
 
     const activeTextColor = '#FFFFFF';
+    const hasLeftValue = typeof leftValue === 'string' && leftValue.length > 0;
+    const hasRightValue = typeof rightValue === 'string' && rightValue.length > 0;
 
     return (
         <View
@@ -116,16 +114,19 @@ export const RadioSwitch: React.FC<RadioSwitchProps> = ({
                 ]}>
                     <Text style={[
                         styles.label,
-                        { color: isSelectingStart ? activeTextColor : colors.textSecondary },
+                        hasLeftValue && styles.labelWithValue,
+                        { color: isLeftSelected ? activeTextColor : colors.textSecondary },
                     ]}>
-                        START
+                        {leftLabel}
                     </Text>
-                    <Text style={[
-                        styles.time,
-                        { color: isSelectingStart ? activeTextColor : colors.text },
-                    ]}>
-                        {formatTime(startTime.hour, startTime.minute)}
-                    </Text>
+                    {hasLeftValue && (
+                        <Text style={[
+                            styles.time,
+                            { color: isLeftSelected ? activeTextColor : colors.text },
+                        ]}>
+                            {leftValue}
+                        </Text>
+                    )}
                 </Animated.View>
             </TouchableOpacity>
 
@@ -143,16 +144,19 @@ export const RadioSwitch: React.FC<RadioSwitchProps> = ({
                 ]}>
                     <Text style={[
                         styles.label,
-                        { color: !isSelectingStart ? activeTextColor : colors.textSecondary },
+                        hasRightValue && styles.labelWithValue,
+                        { color: !isLeftSelected ? activeTextColor : colors.textSecondary },
                     ]}>
-                        END
+                        {rightLabel}
                     </Text>
-                    <Text style={[
-                        styles.time,
-                        { color: !isSelectingStart ? activeTextColor : colors.text },
-                    ]}>
-                        {formatTime(endTime.hour, endTime.minute)}
-                    </Text>
+                    {hasRightValue && (
+                        <Text style={[
+                            styles.time,
+                            { color: !isLeftSelected ? activeTextColor : colors.text },
+                        ]}>
+                            {rightValue}
+                        </Text>
+                    )}
                 </Animated.View>
             </TouchableOpacity>
         </View>
@@ -190,6 +194,8 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         letterSpacing: 1,
         textTransform: 'uppercase',
+    },
+    labelWithValue: {
         marginBottom: 2,
     },
     time: {

@@ -13,6 +13,17 @@ Notifications.setNotificationHandler({
 });
 
 export const NotificationService = {
+    ensureAndroidChannel: async () => {
+        if (Platform.OS !== 'android') {
+            return;
+        }
+
+        await Notifications.setNotificationChannelAsync('default', {
+            name: 'Default',
+            importance: Notifications.AndroidImportance.DEFAULT,
+        });
+    },
+
     initialize: async () => {
         // Check permissions
         const { status } = await Notifications.getPermissionsAsync();
@@ -21,12 +32,27 @@ export const NotificationService = {
     },
 
     requestPermissions: async () => {
-        const { status } = await Notifications.requestPermissionsAsync();
-        if (status !== 'granted') {
-            console.log('Notification permission denied');
-            return false;
+        await NotificationService.ensureAndroidChannel();
+
+        const existing = await Notifications.getPermissionsAsync();
+        if (existing.granted || existing.status === 'granted') {
+            return { granted: true, canAskAgain: true };
         }
-        return true;
+
+        const request = await Notifications.requestPermissionsAsync({
+            ios: {
+                allowAlert: true,
+                allowBadge: true,
+                allowSound: true,
+            },
+        });
+
+        if (!request.granted && request.status !== 'granted') {
+            console.log('Notification permission denied');
+            return { granted: false, canAskAgain: request.canAskAgain ?? false };
+        }
+
+        return { granted: true, canAskAgain: true };
     },
 
     scheduleFreeTimeReminders: async () => {

@@ -10,11 +10,14 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    Animated
+    Animated,
+    LayoutAnimation,
+    UIManager
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../theme';
 import { AuthService } from '../services/AuthService';
+import { RadioSwitch } from '../components/RadioSwitch';
 
 interface Props {
     startWithRegister?: boolean;
@@ -54,8 +57,8 @@ const FadeInDownView: React.FC<{ delay?: number; children: React.ReactNode; styl
     return <Animated.View style={[style, { opacity, transform: [{ translateY }] }]}>{children}</Animated.View>;
 };
 
-const SlideInDownView: React.FC<{ delay?: number; children: React.ReactNode; style?: any }> = ({ delay = 0, children, style }) => {
-    const translateY = useRef(new Animated.Value(50)).current;
+const SlideInDownView: React.FC<{ delay?: number; fromY?: number; children: React.ReactNode; style?: any }> = ({ delay = 0, fromY, children, style }) => {
+    const translateY = useRef(new Animated.Value(fromY ?? 50)).current;
     const opacity = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
@@ -83,6 +86,22 @@ export const LoginScreen: React.FC<Props> = ({ startWithRegister = false, onSucc
     const [lastName, setLastName] = useState('');
 
     const [showPassword, setShowPassword] = useState(false);
+    const toggleBackgroundColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+
+    useEffect(() => {
+        if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+            UIManager.setLayoutAnimationEnabledExperimental(true);
+        }
+    }, []);
+
+    const handleAuthModeChange = (nextMode: AuthMode) => {
+        if (nextMode === authMode) {
+            return;
+        }
+
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setAuthMode(nextMode);
+    };
 
     const handleAuth = async () => {
         if (!email || !password) {
@@ -124,28 +143,18 @@ export const LoginScreen: React.FC<Props> = ({ startWithRegister = false, onSucc
                 </Text>
             </FadeInView>
 
-            <FadeInDownView delay={200} style={styles.toggleContainer}>
-                <TouchableOpacity
-                    style={[styles.toggleBtn, authMode === 'login' && { backgroundColor: isDark ? colors.primary : colors.surface }]}
-                    onPress={() => setAuthMode('login')}
-                >
-                    <Text style={[styles.toggleText, { color: authMode === 'login' ? (isDark ? '#fff' : colors.primary) : colors.textSecondary }]}>
-                        Login
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.toggleBtn, authMode === 'register' && { backgroundColor: isDark ? colors.primary : colors.surface }]}
-                    onPress={() => setAuthMode('register')}
-                >
-                    <Text style={[styles.toggleText, { color: authMode === 'register' ? (isDark ? '#fff' : colors.primary) : colors.textSecondary }]}>
-                        Register
-                    </Text>
-                </TouchableOpacity>
+            <FadeInDownView delay={200} style={[styles.toggleContainer, { backgroundColor: toggleBackgroundColor }]}>
+                <RadioSwitch
+                    leftLabel="Login"
+                    rightLabel="Register"
+                    isLeftSelected={authMode === 'login'}
+                    onChange={(isLeft) => handleAuthModeChange(isLeft ? 'login' : 'register')}
+                />
             </FadeInDownView>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.formContainer}>
                 {authMode === 'register' && (
-                    <SlideInDownView delay={100} style={styles.row}>
+                    <SlideInDownView delay={80} fromY={-12} style={styles.row}>
                         <TextInput
                             style={[styles.input, styles.halfInput, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#fff', borderColor: colors.divider, color: colors.text }]}
                             placeholder="First Name"
@@ -254,19 +263,10 @@ const styles = StyleSheet.create({
     },
     toggleContainer: {
         flexDirection: 'row',
-        marginBottom: 20,
-        backgroundColor: 'rgba(0,0,0,0.05)',
+        marginBottom: 12,
         borderRadius: 12,
         padding: 4,
-    },
-    toggleBtn: {
-        flex: 1,
-        paddingVertical: 10,
-        alignItems: 'center',
-        borderRadius: 10,
-    },
-    toggleText: {
-        fontWeight: '600',
+        height: 52,
     },
     formContainer: {
         paddingBottom: 20,

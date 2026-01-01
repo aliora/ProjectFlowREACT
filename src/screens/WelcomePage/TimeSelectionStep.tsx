@@ -11,6 +11,9 @@ const PICKER_WIDTH = 120;
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5);
 
+const formatTime = (hour: number, minute: number): string =>
+    `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+
 interface TimeSelectionStepProps {
     startTime: { hour: number; minute: number };
     endTime: { hour: number; minute: number };
@@ -107,9 +110,11 @@ export const TimeSelectionStep: React.FC<TimeSelectionStepProps> = ({
             {/* Animated Time Toggle Switch */}
             <View style={[styles.toggleContainer, { backgroundColor: containerBackgroundColor }]}>
                 <RadioSwitch
-                    startTime={startTime}
-                    endTime={endTime}
-                    isSelectingStart={isSelectingStart}
+                    leftLabel="START"
+                    rightLabel="END"
+                    leftValue={formatTime(startTime.hour, startTime.minute)}
+                    rightValue={formatTime(endTime.hour, endTime.minute)}
+                    isLeftSelected={isSelectingStart}
                     onChange={setIsSelectingStart}
                 />
             </View>
