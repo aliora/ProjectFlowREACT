@@ -16,6 +16,7 @@ import * as Haptics from 'expo-haptics';
 import { useTheme } from '../../theme';
 import { NotificationService } from '../../services/NotificationService';
 import { AuthService } from '../../services/AuthService';
+import { GalaxyNetworkBackground } from '../../components/GalaxyNetworkBackground';
 
 // Import step components
 import { IntroStep } from './IntroStep';
@@ -202,6 +203,7 @@ export const WelcomePage: React.FC<Props> = ({ onFinish }) => {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+            <GalaxyNetworkBackground />
             <PagerView
                 style={styles.pagerView}
                 initialPage={0}
