@@ -4,6 +4,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import PagerView from 'react-native-pager-view';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withSpring,
+    withTiming,
+    interpolateColor,
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 import { useTheme } from '../../theme';
 import { NotificationService } from '../../services/NotificationService';
@@ -20,6 +28,34 @@ interface Props {
     onFinish?: () => void;
 }
 
+const NavDot: React.FC<{
+    isActive: boolean;
+    onPress: () => void;
+    colors: any;
+}> = ({ isActive, onPress, colors }) => {
+    const progress = useSharedValue(isActive ? 1 : 0);
+
+    useEffect(() => {
+        progress.value = withTiming(isActive ? 1 : 0, { duration: 220 });
+    }, [isActive]);
+
+    const dotStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: 0.8 + progress.value * 0.6 }],
+        opacity: 0.35 + progress.value * 0.65,
+        backgroundColor: interpolateColor(
+            progress.value,
+            [0, 1],
+            [`${colors.textSecondary}55`, colors.primary]
+        ),
+    }));
+
+    return (
+        <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.dotWrapper}>
+            <Animated.View style={[styles.dot, dotStyle]} />
+        </TouchableOpacity>
+    );
+};
+
 export const WelcomePage: React.FC<Props> = ({ onFinish }) => {
     const { colors } = useTheme();
     const pagerRef = useRef<PagerView>(null);
@@ -33,8 +69,15 @@ export const WelcomePage: React.FC<Props> = ({ onFinish }) => {
     // Notification State
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
+    // Animation values
+    const navBarTranslateY = useSharedValue(100);
+    const navBarOpacity = useSharedValue(0);
+
     useEffect(() => {
         loadSavedData();
+        // Animate navbar entrance
+        navBarTranslateY.value = withSpring(0, { damping: 15, stiffness: 100 });
+        navBarOpacity.value = withTiming(1, { duration: 500 });
     }, []);
 
     const loadSavedData = async () => {
@@ -60,23 +103,22 @@ export const WelcomePage: React.FC<Props> = ({ onFinish }) => {
     }, [currentPage]);
 
     const onPageSelected = (e: any) => {
-        setCurrentPage(e.nativeEvent.position);
+        const newPage = e.nativeEvent.position;
+        if (newPage !== currentPage) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        }
+        setCurrentPage(newPage);
     };
 
     const onPageScroll = (e: any) => {
         const { position, offset } = e.nativeEvent;
 
-        // Trigger EARLY animation
-        // If we are on page 0 and scrolling to 1 (Time Selection), 
-        // trigger as soon as we move 0.1% (offset > 0.001)
         if (position === 0 && offset > 0.001) {
             if (currentPage !== 1) setCurrentPage(1);
         }
-        // If we are on page 2 and scrolling back to 1
         else if (position === 1 && offset < 0.999 && offset > 0) {
             if (currentPage !== 1) setCurrentPage(1);
         }
-        // Fallback for standard page changes
         else {
             const page = Math.round(position + offset);
             if (page !== currentPage) {
@@ -85,19 +127,23 @@ export const WelcomePage: React.FC<Props> = ({ onFinish }) => {
         }
     };
 
+    const goToPage = (page: number) => {
+        if (page >= 0 && page <= 4 && page !== currentPage) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setCurrentPage(page);
+            pagerRef.current?.setPage(page);
+        }
+    };
+
     const nextPage = () => {
         if (currentPage < 4) {
-            const next = currentPage + 1;
-            setCurrentPage(next); // Optimize: Update state immediately
-            pagerRef.current?.setPage(next);
+            goToPage(currentPage + 1);
         }
     };
 
     const prevPage = () => {
         if (currentPage > 0) {
-            const prev = currentPage - 1;
-            setCurrentPage(prev); // Optimize: Update state immediately
-            pagerRef.current?.setPage(prev);
+            goToPage(currentPage - 1);
         }
     };
 
@@ -116,7 +162,6 @@ export const WelcomePage: React.FC<Props> = ({ onFinish }) => {
         await AsyncStorage.setItem('freeTimeEndHour', endTime.hour.toString());
         await AsyncStorage.setItem('freeTimeEndMinute', endTime.minute.toString());
 
-        // Check if user is logged in
         const user = AuthService.getCurrentUser();
         if (user && onFinish) {
             onFinish();
@@ -135,6 +180,14 @@ export const WelcomePage: React.FC<Props> = ({ onFinish }) => {
         }
     };
 
+    const navBarAnimStyle = useAnimatedStyle(() => ({
+        transform: [{ translateY: navBarTranslateY.value }],
+        opacity: navBarOpacity.value,
+    }));
+
+    const isPrevDisabled = currentPage === 0;
+    const isNextDisabled = currentPage >= 4 || currentPage === 3;
+
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <PagerView
@@ -145,12 +198,10 @@ export const WelcomePage: React.FC<Props> = ({ onFinish }) => {
                 onPageScroll={onPageScroll}
                 scrollEnabled={true}
             >
-                {/* Page 1: Intro */}
                 <View key="1">
                     <IntroStep />
                 </View>
 
-                {/* Page 2: Time Selection */}
                 <View key="2">
                     <TimeSelectionStep
                         startTime={startTime}
@@ -163,7 +214,6 @@ export const WelcomePage: React.FC<Props> = ({ onFinish }) => {
                     />
                 </View>
 
-                {/* Page 3: Notifications */}
                 <View key="3">
                     <NotificationStep
                         notificationsEnabled={notificationsEnabled}
@@ -171,48 +221,67 @@ export const WelcomePage: React.FC<Props> = ({ onFinish }) => {
                     />
                 </View>
 
-                {/* Page 4: Auth */}
                 <View key="4">
                     <AuthStep onSuccess={nextPage} />
                 </View>
 
-                {/* Page 5: Completion */}
                 <View key="5">
                     <CompletionStep onFinish={handleFinish} />
                 </View>
             </PagerView>
 
-            {/* Navigation Controls */}
-            <View style={styles.footer}>
-                {currentPage > 0 && (
-                    <TouchableOpacity onPress={prevPage} style={styles.navBtn}>
-                        <MaterialCommunityIcons name="arrow-left" size={24} color={colors.secondary} />
-                    </TouchableOpacity>
-                )}
-
-                <View style={styles.dots}>
-                    {[0, 1, 2, 3, 4].map(i => (
-                        <View
-                            key={i}
-                            style={[
-                                styles.dot,
-                                {
-                                    backgroundColor: i === currentPage ? colors.primary : colors.divider,
-                                    width: i === currentPage ? 24 : 8
-                                }
-                            ]}
+            {/* Minimal Dot Navigation */}
+            <Animated.View style={[styles.navBarWrapper, navBarAnimStyle]}>
+                <View style={styles.navBarInner}>
+                    <TouchableOpacity
+                        onPress={prevPage}
+                        disabled={isPrevDisabled}
+                        activeOpacity={0.8}
+                        style={[
+                            styles.navButtonBase,
+                            styles.navButtonGhost,
+                            { borderColor: colors.divider, opacity: isPrevDisabled ? 0.2 : 0.6 },
+                        ]}
+                    >
+                        <MaterialCommunityIcons
+                            name="chevron-left"
+                            size={22}
+                            color={colors.textSecondary}
                         />
-                    ))}
-                </View>
-
-                {currentPage < 4 && currentPage !== 3 && (
-                    <TouchableOpacity onPress={nextPage} style={styles.navBtn}>
-                        <MaterialCommunityIcons name="arrow-right" size={24} color={colors.primary} />
                     </TouchableOpacity>
-                )}
-                {/* Placeholder for spacing when button hidden */}
-                {(currentPage === 4 || currentPage === 3) && <View style={{ width: 40 }} />}
-            </View>
+
+                    <View style={styles.dotsRow}>
+                        {[0, 1, 2, 3, 4].map((i) => (
+                            <NavDot
+                                key={i}
+                                isActive={currentPage === i}
+                                onPress={() => goToPage(i)}
+                                colors={colors}
+                            />
+                        ))}
+                    </View>
+
+                    <TouchableOpacity
+                        onPress={nextPage}
+                        disabled={isNextDisabled}
+                        activeOpacity={0.8}
+                        style={[
+                            styles.navButtonBase,
+                            styles.navButtonPrimary,
+                            {
+                                backgroundColor: colors.primary,
+                                opacity: isNextDisabled ? 0.35 : 1,
+                            },
+                        ]}
+                    >
+                        <MaterialCommunityIcons
+                            name="chevron-right"
+                            size={22}
+                            color="#fff"
+                        />
+                    </TouchableOpacity>
+                </View>
+            </Animated.View>
         </SafeAreaView>
     );
 };
@@ -227,22 +296,47 @@ const styles = StyleSheet.create({
     pagerView: {
         flex: 1,
     },
-    footer: {
+    navBarWrapper: {
+        position: 'absolute',
+        bottom: 18,
+        left: 20,
+        right: 20,
+    },
+    navBarInner: {
         flexDirection: 'row',
+        alignItems: 'center',
         justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 24,
+        paddingVertical: 6,
     },
-    navBtn: {
-        padding: 10,
-    },
-    dots: {
+    dotsRow: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
+        flex: 1,
+    },
+    dotWrapper: {
+        width: 24,
+        height: 24,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     dot: {
+        width: 8,
         height: 8,
         borderRadius: 4,
-        marginHorizontal: 4,
+    },
+    navButtonBase: {
+        width: 36,
+        height: 32,
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    navButtonGhost: {
+        borderWidth: 1,
+        backgroundColor: 'transparent',
+    },
+    navButtonPrimary: {
+        backgroundColor: '#000',
     },
 });

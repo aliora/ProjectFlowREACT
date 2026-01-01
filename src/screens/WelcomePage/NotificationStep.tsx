@@ -33,24 +33,24 @@ export const NotificationStep: React.FC<NotificationStepProps> = ({
                 <Text style={[styles.body, { color: colors.textSecondary }]}>
                     Get timely reminders for your free time sessions. We promise not to spam.
                 </Text>
-            </View>
 
-            <View style={styles.actionContainer}>
-                {notificationsEnabled ? (
-                    <ZoomInView style={styles.permissionGranted}>
-                        <MaterialCommunityIcons name="check-circle" size={60} color={colors.primary} />
-                        <Text style={[styles.subtitle, { color: colors.primary }]}>All Set!</Text>
-                    </ZoomInView>
-                ) : (
-                    <ThemedPrimaryButton
-                        label="Enable Notifications"
-                        icon={<MaterialCommunityIcons name="bell-ring" size={20} color="#fff" />}
-                        onPress={onRequestNotifications}
-                        size="large"
-                        fullWidth
-                        style={styles.button}
-                    />
-                )}
+                <View style={styles.actionContainer}>
+                    {notificationsEnabled ? (
+                        <ZoomInView style={styles.permissionGranted}>
+                            <MaterialCommunityIcons name="check-circle" size={60} color={colors.primary} />
+                            <Text style={[styles.subtitle, { color: colors.primary }]}>All Set!</Text>
+                        </ZoomInView>
+                    ) : (
+                        <ThemedPrimaryButton
+                            label="Enable Notifications"
+                            icon={<MaterialCommunityIcons name="bell-ring" size={20} color="#fff" />}
+                            onPress={onRequestNotifications}
+                            size="large"
+                            fullWidth
+                            style={styles.button}
+                        />
+                    )}
+                </View>
             </View>
         </View>
     );
@@ -60,7 +60,6 @@ const styles = StyleSheet.create({
     page: {
         flex: 1,
         padding: 24,
-        paddingBottom: 48,
     },
     centerContent: {
         flex: 1,
@@ -98,6 +97,7 @@ const styles = StyleSheet.create({
     actionContainer: {
         width: '100%',
         alignItems: 'center',
+        marginTop: 40,
     },
     subtitle: {
         fontSize: 18,

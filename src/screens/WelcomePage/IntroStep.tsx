@@ -58,60 +58,75 @@ const PHASES = {
 };
 
 /**
- * Smoke Animation Component
+ * Smoke Animation Component - Highly Optimized for performance
+ * Pre-renders all frames and uses Animated opacity to switch between them.
+ * This eliminates state changes and re-renders during animation.
  */
-const SmokeAnimation: React.FC<{ size: number }> = ({ size }) => {
-    const [currentFrame, setCurrentFrame] = React.useState(0);
-    const [isLooping, setIsLooping] = React.useState(false);
+const SmokeAnimation: React.FC<{ size: number }> = React.memo(({ size }) => {
+    // All 8 frames: 4 start + 4 loop
+    const allFrames = [...smokeFrames.start, ...smokeFrames.loop];
+    const frameOpacities = useRef(allFrames.map((_, i) => new Animated.Value(i === 0 ? 1 : 0))).current;
+    const frameIndexRef = useRef(0);
+    const isLoopingRef = useRef(false);
 
     useEffect(() => {
-        let frameIndex = 0;
-        let loopIndex = 0;
-
         const interval = setInterval(() => {
-            if (!isLooping) {
-                if (frameIndex < smokeFrames.start.length) {
-                    setCurrentFrame(frameIndex);
-                    frameIndex++;
+            const prevIndex = frameIndexRef.current;
+            let nextIndex: number;
+
+            if (!isLoopingRef.current) {
+                // Start sequence (indices 0-3)
+                if (frameIndexRef.current < smokeFrames.start.length - 1) {
+                    nextIndex = frameIndexRef.current + 1;
+                    frameIndexRef.current = nextIndex;
                 } else {
-                    setIsLooping(true);
-                    // Start loop immediately
-                    setCurrentFrame(0);
+                    // Transition to loop sequence (indices 4-7)
+                    isLoopingRef.current = true;
+                    frameIndexRef.current = 4; // First loop frame
+                    nextIndex = 4;
                 }
             } else {
-                setCurrentFrame(loopIndex);
-                loopIndex = (loopIndex + 1) % smokeFrames.loop.length;
+                // Loop sequence (cycle through indices 4-7)
+                nextIndex = 4 + ((frameIndexRef.current - 4 + 1) % smokeFrames.loop.length);
+                frameIndexRef.current = nextIndex;
             }
-        }, 100); // 100ms per frame
+
+            // Fade out previous, fade in next - using native driver for smooth animation
+            frameOpacities[prevIndex].setValue(0);
+            frameOpacities[nextIndex].setValue(1);
+        }, 100); // Faster frame rate for smoother loop
 
         return () => clearInterval(interval);
-    }, [isLooping]);
-
-    const imageSource = isLooping
-        ? smokeFrames.loop[currentFrame]
-        : smokeFrames.start[currentFrame];
-
-    // Don't render if we are past the start frames but the loop logic hasn't picked up yet (though logic handles this)
-    if (!imageSource) return null;
+    }, []);
 
     return (
-        <Image
-            source={imageSource}
-            style={{
-                width: size * 0.5, // Explicit width (replaces scale 0.8)
-                height: size * 0.5, // Explicit height
-                position: 'absolute',
-                top: size * 0.46, // Moved closer (was 0.5)
-            }}
-            resizeMode="contain"
-        />
+        <View style={{
+            width: size * 0.5,
+            height: size * 0.5,
+            position: 'absolute',
+            top: size * 0.46,
+        }}>
+            {allFrames.map((frame, index) => (
+                <Animated.Image
+                    key={index}
+                    source={frame}
+                    style={{
+                        width: size * 0.5,
+                        height: size * 0.5,
+                        position: 'absolute',
+                        opacity: frameOpacities[index],
+                    }}
+                    resizeMode="contain"
+                />
+            ))}
+        </View>
     );
-};
+});
 
 /**
- * Rocket with smoke effect
+ * Rocket with smoke effect - Memoized for performance
  */
-const RocketWithSmoke: React.FC<{ size: number }> = ({ size }) => {
+const RocketWithSmoke: React.FC<{ size: number }> = React.memo(({ size }) => {
     const enlargedSize = size * 2.2; // Increase visual size without affecting layout container
 
     return (
@@ -126,7 +141,7 @@ const RocketWithSmoke: React.FC<{ size: number }> = ({ size }) => {
             </View>
         </View>
     );
-};
+});
 
 const CinematicIntroAnimation: React.FC<CinematicIntroAnimationProps> = ({
     size = 100,
