@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ThemeProvider, useTheme } from './src/context/ThemeContext';
-import { OnboardingScreen } from './src/screens/OnboardingScreen';
+import { ThemeProvider, useTheme } from './src/theme';
+import { OnboardingScreen } from './src/screens/WelcomePage';
 import { MainScreen } from './src/screens/MainScreen';
 import { AuthService } from './src/services/AuthService';
 
 const AppContent = () => {
-  const { isDark, colors } = useTheme();
+  const { isDarkMode, colors } = useTheme();
   const [loading, setLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [user, setUser] = useState<any>(null);

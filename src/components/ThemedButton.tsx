@@ -15,8 +15,8 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { useColors } from '../theme';
-import { ButtonSize, BorderRadius } from '../constants/Layout';
+import { useTheme } from '../theme';
+import { ButtonSize } from '../constants/Layout';
 
 /**
  * Button size type
@@ -49,15 +49,6 @@ interface BaseButtonProps {
 
 /**
  * ThemedPrimaryButton - Elevated/filled button style
- *
- * @example
- * ```tsx
- * <ThemedPrimaryButton
- *   label="Create Project"
- *   icon={<AddIcon />}
- *   onPress={() => console.log('pressed')}
- * />
- * ```
  */
 export const ThemedPrimaryButton: React.FC<BaseButtonProps> = ({
   label,
@@ -70,7 +61,7 @@ export const ThemedPrimaryButton: React.FC<BaseButtonProps> = ({
   style,
   textStyle,
 }) => {
-  const colors = useColors();
+  const { colors } = useTheme();
   const sizeStyle = ButtonSize[size];
   const isDisabled = disabled || isLoading;
 
@@ -83,8 +74,8 @@ export const ThemedPrimaryButton: React.FC<BaseButtonProps> = ({
         styles.button,
         {
           backgroundColor: isDisabled
-            ? colors.button.primary.background + '80' // 50% opacity
-            : colors.button.primary.background,
+            ? colors.primary + '80' // Simple opacity simulation
+            : colors.primary,
           paddingHorizontal: sizeStyle.paddingHorizontal,
           paddingVertical: sizeStyle.paddingVertical,
           minHeight: sizeStyle.minHeight,
@@ -97,7 +88,7 @@ export const ThemedPrimaryButton: React.FC<BaseButtonProps> = ({
       {isLoading ? (
         <ActivityIndicator
           size="small"
-          color={colors.button.primary.text}
+          color="#FFFFFF"
         />
       ) : (
         <View style={styles.content}>
@@ -106,7 +97,7 @@ export const ThemedPrimaryButton: React.FC<BaseButtonProps> = ({
             style={[
               styles.label,
               {
-                color: colors.button.primary.text,
+                color: '#FFFFFF',
               },
               textStyle,
             ]}
@@ -121,14 +112,6 @@ export const ThemedPrimaryButton: React.FC<BaseButtonProps> = ({
 
 /**
  * ThemedOutlinedButton - Outlined/secondary button style
- *
- * @example
- * ```tsx
- * <ThemedOutlinedButton
- *   label="Cancel"
- *   onPress={() => console.log('cancelled')}
- * />
- * ```
  */
 export const ThemedOutlinedButton: React.FC<BaseButtonProps> = ({
   label,
@@ -141,9 +124,10 @@ export const ThemedOutlinedButton: React.FC<BaseButtonProps> = ({
   style,
   textStyle,
 }) => {
-  const colors = useColors();
+  const { colors } = useTheme();
   const sizeStyle = ButtonSize[size];
   const isDisabled = disabled || isLoading;
+  const contentColor = colors.secondary; // Or primary depending on design
 
   return (
     <TouchableOpacity
@@ -155,8 +139,8 @@ export const ThemedOutlinedButton: React.FC<BaseButtonProps> = ({
         styles.outlinedButton,
         {
           borderColor: isDisabled
-            ? colors.button.secondary.border + '80'
-            : colors.button.secondary.border,
+            ? contentColor + '80'
+            : contentColor,
           paddingHorizontal: sizeStyle.paddingHorizontal,
           paddingVertical: sizeStyle.paddingVertical,
           minHeight: sizeStyle.minHeight,
@@ -169,7 +153,7 @@ export const ThemedOutlinedButton: React.FC<BaseButtonProps> = ({
       {isLoading ? (
         <ActivityIndicator
           size="small"
-          color={colors.button.secondary.text}
+          color={contentColor}
         />
       ) : (
         <View style={styles.content}>
@@ -179,8 +163,8 @@ export const ThemedOutlinedButton: React.FC<BaseButtonProps> = ({
               styles.label,
               {
                 color: isDisabled
-                  ? colors.button.secondary.text + '80'
-                  : colors.button.secondary.text,
+                  ? contentColor + '80'
+                  : contentColor,
               },
               textStyle,
             ]}
@@ -206,7 +190,7 @@ export const ThemedTextButton: React.FC<BaseButtonProps> = ({
   style,
   textStyle,
 }) => {
-  const colors = useColors();
+  const { colors } = useTheme();
   const sizeStyle = ButtonSize[size];
   const isDisabled = disabled || isLoading;
 
@@ -269,6 +253,8 @@ export const ThemedIconButton: React.FC<IconButtonProps> = ({
   disabled = false,
   style,
 }) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { colors } = useTheme(); // Available if needed for defaults
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -306,7 +292,7 @@ export const FloatingActionButton: React.FC<FABProps> = ({
   size = 56,
   style,
 }) => {
-  const colors = useColors();
+  const { colors } = useTheme();
 
   return (
     <TouchableOpacity

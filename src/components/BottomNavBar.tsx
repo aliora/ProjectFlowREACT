@@ -99,7 +99,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               style={[
                 styles.navLabel,
                 {
-                  color: selectedIndex === index ? colors.primary : colors.text.tertiary,
+                  color: selectedIndex === index ? colors.primary : colors.textSecondary,
                   fontWeight: selectedIndex === index ? '700' : '500',
                 },
               ]}

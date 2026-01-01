@@ -13,7 +13,7 @@ import {
     Animated
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from '../theme';
 import { AuthService } from '../services/AuthService';
 
 interface Props {

@@ -38,3 +38,5 @@ export {
 
 // Navigation Components
 export { BottomNavBar } from './BottomNavBar';
+
+export { default as WheelPicker } from './WheelPicker';

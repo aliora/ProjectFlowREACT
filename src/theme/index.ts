@@ -15,13 +15,13 @@ export {
 } from './AppPalette';
 
 // Theme Context and Provider
+// Theme Context and Provider
 export {
   ThemeProvider,
   useTheme,
   useColors,
   useIsDarkMode,
-  default as ThemeContext,
-} from './ThemeContext';
+} from '../context/ThemeContext';
 
 // Typography
 export {

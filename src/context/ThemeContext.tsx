@@ -31,6 +31,7 @@ export interface ThemeColors {
     border: string;
     divider: string;
     error: string;
+    icon: string;
 }
 
 const LightTheme: ThemeColors = {
@@ -44,6 +45,7 @@ const LightTheme: ThemeColors = {
     border: AppPalette.earthBrown,
     divider: AppPalette.lightDivider,
     error: '#B00020',
+    icon: AppPalette.earthBrown,
 };
 
 const DarkTheme: ThemeColors = {
@@ -57,6 +59,7 @@ const DarkTheme: ThemeColors = {
     border: AppPalette.lightStone,
     divider: AppPalette.darkDivider,
     error: '#CF6679',
+    icon: AppPalette.lightStone,
 };
 
 interface ThemeContextType {
@@ -64,6 +67,7 @@ interface ThemeContextType {
     colors: ThemeColors;
     toggleTheme: () => void;
     isDark: boolean;
+    isDarkMode: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -110,6 +114,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
                 colors,
                 toggleTheme,
                 isDark: themeMode === 'dark',
+                isDarkMode: themeMode === 'dark',
             }}
         >
             {children}
@@ -123,4 +128,14 @@ export const useTheme = () => {
         throw new Error('useTheme must be used within a ThemeProvider');
     }
     return context;
+};
+
+export const useColors = () => {
+    const { colors } = useTheme();
+    return colors;
+};
+
+export const useIsDarkMode = () => {
+    const { isDark } = useTheme();
+    return isDark;
 };
